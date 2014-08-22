@@ -2,6 +2,6 @@
 #define TEMPCTRL_H
 
 void temp_init(void);
-uint8_t cmd_temp_read(char*);
+uint8_t temp_read(char*);
 
 #endif

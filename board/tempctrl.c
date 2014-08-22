@@ -5,12 +5,48 @@
 #include "lib/uart/uart.h"
 #include "lib/i2cmaster/i2cmaster.h"
 #include "tempctrl.h"
+#include "command.h"
 
 #define ADDR_AM2321 0b10111000
+
+uint8_t read_data(uint16_t*, uint16_t*);
 
 void temp_init()
 {
   _delay_ms(500);
+}
+
+uint8_t temp_read(char* params_str)
+{
+
+  uint8_t result;
+  uint16_t temp, hum;
+  result = read_data(&temp,&hum);
+  if(result > 0)
+  {
+    CMD_ERR_P(255, "error in 1st read");
+  }
+  _delay_ms(2000);
+
+  result = read_data(&temp,&hum);
+  if(result > 0)
+  {
+    CMD_ERR_P(255, "error in 2nd read");
+  }
+
+  char buf[6];
+
+  itoa(temp,buf,10);
+  uart_puts_P("TMP: ");
+  uart_puts(buf);
+  uart_puts_P("\r\n");
+
+  itoa(hum,buf,10);
+  uart_puts_P("HUM: ");
+  uart_puts(buf);
+  uart_puts_P("\r\n");
+
+  CMD_OK;
 }
 
 uint8_t read_data(uint16_t* temp, uint16_t* hum)
@@ -65,41 +101,6 @@ uint8_t read_data(uint16_t* temp, uint16_t* hum)
   i2c_readAck();
   i2c_readNak();
   i2c_stop();
-
-  return 0;
-}
-
-uint8_t cmd_temp_read(char* params_str)
-{
-
-  uint8_t result;
-  uint16_t temp, hum;
-  result = read_data(&temp,&hum);
-  if(result > 0)
-  {
-    uart_puts_P("temp_read: error in 1st read\r\n");
-    return 255;
-  }
-  _delay_ms(2000);
-
-  result = read_data(&temp,&hum);
-  if(result > 0)
-  {
-    uart_puts_P("temp_read: error in 2nd read\r\n");
-    return 255;
-  }
-
-  char buf[6];
-
-  itoa(temp,buf,10);
-  uart_puts_P("TMP: ");
-  uart_puts(buf);
-  uart_puts_P("\r\n");
-
-  itoa(hum,buf,10);
-  uart_puts_P("HUM: ");
-  uart_puts(buf);
-  uart_puts_P("\r\n");
 
   return 0;
 }

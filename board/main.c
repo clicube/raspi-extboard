@@ -129,11 +129,11 @@ uint8_t exec_cmd(char* str)
   }
   else if( strcmp("temp_read", cmd_str) == 0)
   {
-    ret = cmd_temp_read(params_str);
+    ret = temp_read(params_str);
   }
-  else if( strcmp("ir_recv", cmd_str) == 0)
+  else if( strcmp("ir_scan", cmd_str) == 0)
   {
-    ret = cmd_ir_recv(params_str);
+    ret = ir_scan(params_str);
   }
   else
   {
