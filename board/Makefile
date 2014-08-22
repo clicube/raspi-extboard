@@ -23,6 +23,9 @@ PROGRAMMER = #-c stk500v2 -P avrdoper
 OBJECTS    = main.o irctrl.o tempctrl.o lib/uart/uart.o lib/i2cmaster/i2cmaster.o
 FUSES      = #-U hfuse:w:0xd9:m -U lfuse:w:0x24:m
 
+SRCS := $(OBJECTS:%.o=%.c)
+DEPS := $(SRCS:%.c=%.d)
+
 # ATMega8 fuse bits used above (fuse bits for other devices are different!):
 # Example for 8 MHz internal oscillator
 # Fuse high byte:
@@ -49,10 +52,12 @@ FUSES      = #-U hfuse:w:0xd9:m -U lfuse:w:0x24:m
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -std=c99 -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -std=c99 -Winline -Wall -MMD -MP -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # symbolic targets:
 all:	main.hex
+
+-include $(DEPS)
 
 .c.o:
 	$(COMPILE) -c $< -o $@
@@ -81,7 +86,7 @@ load: all
 	bootloadHID main.hex
 
 clean:
-	rm -f main.hex main.elf $(OBJECTS)
+	rm -f main.hex main.elf $(OBJECTS) $(DEPS)
 
 # file targets:
 main.elf: $(OBJECTS)
