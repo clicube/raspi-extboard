@@ -61,6 +61,29 @@ uint8_t ir_scan(char* params_str)
       RETURN_CMD_ERR_P(ret,"param too large");
   }
 
+  /* print result data */
+  char buf[5];
+
+  itoa(period,buf,10);
+  print_P("period     : ");
+  print(buf);
+  println_P(" us");
+
+  itoa(scan_state->data_count,buf,10);
+  print_P("data length: ");
+  println(buf);
+
+  print_P("data       : ");
+  for(uint8_t i=0; i<scan_state->data_count; i++)
+  {
+    uint8_t pos1, pos2;
+    pos1 = i / 8;
+    pos2 = i % 8;
+    char c = (scan_state->data[pos1]&_BV(pos2)) ? '1' : '0';
+    printc(c);
+  }
+  println_P("");
+
   scan_state = NULL;
   RETURN_CMD_OK;
 }
@@ -184,6 +207,11 @@ ISR(TIMER0_COMPA_vect)
   data = scan_state->data[pos1];
 
   scan_state->data[pos1] = ( data & ~(1<<pos2) ) | (input<<pos2);
+
+  if(scan_state->data_count == 255)
+  {
+    stop_scan();
+  }
 
   return;
 
