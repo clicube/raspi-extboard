@@ -16,9 +16,8 @@
 
 void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 int main(void);
-void main_loop(void);
 void wait_for_cmd(char*);
-uint8_t exec_cmd(char*);
+static inline uint8_t exec_cmd(char*);
 
 void wdt_init(void)
 {

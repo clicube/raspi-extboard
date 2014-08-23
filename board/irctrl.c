@@ -8,7 +8,7 @@
 #include "command.h"
 
 uint8_t start_scan(uint16_t period);
-void stop_scan(void);
+static inline void stop_scan(void);
 
 struct _scan_state_t
 {
