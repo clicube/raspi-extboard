@@ -115,23 +115,23 @@ uint8_t exec_cmd(char* str)
   char* params_str;
 
   cmd_str = str;
-  params_str = strtok(str," ");
+  params_str = strtok_P(str,PSTR(""));
 
-  if( strcmp("help", cmd_str) == 0 )
+  if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
     uart_puts_P("available command: help reset temp_read ir_recv\r\n");
     ret = 0;
   }
-  else if( strcmp("reset", cmd_str) == 0)
+  else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
   {
     wdt_enable(WDTO_15MS);
     for(;;){}
   }
-  else if( strcmp("temp_read", cmd_str) == 0)
+  else if( strcmp_P(cmd_str, PSTR("temp_read")) == 0)
   {
     ret = temp_read(params_str);
   }
-  else if( strcmp("ir_scan", cmd_str) == 0)
+  else if( strcmp_P(cmd_str, PSTR("ir_scan")) == 0)
   {
     ret = ir_scan(params_str);
   }

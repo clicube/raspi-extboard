@@ -2,7 +2,6 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 #include <stdlib.h>
-#include "lib/uart/uart.h"
 #include "lib/i2cmaster/i2cmaster.h"
 #include "tempctrl.h"
 #include "command.h"
@@ -37,14 +36,12 @@ uint8_t temp_read(char* params_str)
   char buf[6];
 
   itoa(temp,buf,10);
-  uart_puts_P("TMP: ");
-  uart_puts(buf);
-  uart_puts_P("\r\n");
+  print_P("TMP: ");
+  println(buf);
 
   itoa(hum,buf,10);
-  uart_puts_P("HUM: ");
-  uart_puts(buf);
-  uart_puts_P("\r\n");
+  print_P("HUM: ");
+  println(buf);
 
   CMD_OK;
 }
