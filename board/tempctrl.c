@@ -23,14 +23,14 @@ uint8_t temp_read(char* params_str)
   result = read_data(&temp,&hum);
   if(result > 0)
   {
-    CMD_ERR_P(255, "error in 1st read");
+    RETURN_CMD_ERR_P(255, "error in 1st read");
   }
   _delay_ms(2000);
 
   result = read_data(&temp,&hum);
   if(result > 0)
   {
-    CMD_ERR_P(255, "error in 2nd read");
+    RETURN_CMD_ERR_P(255, "error in 2nd read");
   }
 
   char buf[6];
@@ -43,7 +43,7 @@ uint8_t temp_read(char* params_str)
   print_P("HUM: ");
   println(buf);
 
-  CMD_OK;
+  RETURN_CMD_OK;
 }
 
 uint8_t read_data(uint16_t* temp, uint16_t* hum)

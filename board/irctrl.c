@@ -39,33 +39,30 @@ uint8_t ir_scan(char* params_str)
 
   if(period <= 0)
   {
-    CMD_ERR_P(IRCTRL_ERR_PARAM_INVALID, "invalid param");
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_INVALID, "invalid param");
   }
   else if(period > 5000)
   {
-    CMD_ERR_P(IRCTRL_ERR_PARAM_TOO_LARGE,"param too large");
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_TOO_LARGE,"param too large");
   }
 
-  //scan_state = malloc(sizeof(scan_state));
   scan_state_t ss;
   scan_state = &ss;
   ret = start_scan(period);
-  if(ret == 0)
-  {
-    while(scan_state->end_flag==0); // wait for scan
-  }
-  //free(scan_state);
-  scan_state = NULL;
 
   switch(ret)
   {
+    case 0:
+      while(scan_state->end_flag==0); // wait for scan
+      break;
     case IRCTRL_ERR_PARAM_TOO_SMALL:
-      CMD_ERR_P(ret,"param too small");
+      RETURN_CMD_ERR_P(ret,"param too small");
     case IRCTRL_ERR_PARAM_TOO_LARGE:
-      CMD_ERR_P(ret,"param too large");
+      RETURN_CMD_ERR_P(ret,"param too large");
   }
 
-  CMD_OK;
+  scan_state = NULL;
+  RETURN_CMD_OK;
 }
 
 uint8_t start_scan(uint16_t period)
