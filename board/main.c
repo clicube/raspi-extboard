@@ -4,10 +4,12 @@
 #include <avr/wdt.h>
 #include <util/delay.h>
 #include <string.h>
+#include <stdlib.h>
 #include "lib/uart/uart.h"
 #include "lib/i2cmaster/i2cmaster.h"
 #include "irctrl.h"
 #include "tempctrl.h"
+#include "command.h"
 
 
 #define UART_BAUD_RATE 9600
@@ -66,7 +68,7 @@ void wait_for_cmd(char* buf)
 
     if( c == '\n' || c == '\r' )
     {
-      uart_puts_P("\r\n");
+      uart_puts_p(CRLF_P);
       buf[buf_idx] = '\0';
       return;
     }
@@ -124,7 +126,8 @@ uint8_t exec_cmd(char* str)
   else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
   {
     wdt_enable(WDTO_15MS);
-    for(;;){}
+    cli();
+    for(;;);
   }
   else if( strcmp_P(cmd_str, PSTR("temp_read")) == 0)
   {
@@ -138,7 +141,7 @@ uint8_t exec_cmd(char* str)
   {
     uart_puts_P("unknown command: ");
     uart_puts(cmd_str);
-    uart_puts_P("\r\n");
+    uart_puts_p(CRLF_P);
   }
 
   return ret;
