@@ -14,6 +14,9 @@ PROGMEM static const char CRLF_P[] = "\r\n";
 #define println_p(msg) uart_puts_p(msg); print_CRLF
 #define println_P(msg) uart_puts_P(msg "\r\n")
 
+#define dprintln(msg) print(__func__); print_P("(): "); println(msg)
+#define dprintln_P(msg) print(__func__); print_P("(): "); println_P(msg)
+
 #define RETURN_CMD_OK return 0
 
 #define RETURN_CMD_ERR(code,msg)   print(__func__); print_P(": "); println(msg);   return code

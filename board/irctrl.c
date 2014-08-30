@@ -12,11 +12,10 @@ static inline void stop_scan(void);
 
 struct _scan_state_t
 {
-  uint8_t end_flag;
-  uint8_t prev_state;
-  uint8_t cont_count;
-  uint8_t data_count;
-  uint8_t data[32];
+  volatile uint8_t end_flag;
+  uint16_t cont_count;
+  uint16_t data_count;
+  uint8_t data[IRCTRL_BUF_LEN];
 };
 typedef struct _scan_state_t scan_state_t;
 
@@ -25,14 +24,19 @@ scan_state_t* scan_state;
 void ir_init()
 {
   /* Pin initialization */
-  /* set PD7, Hi-Z */
-  DDRD |= _BV(PD7);
-  PORTD &= ~_BV(PD7);
+  /* set PD7 to input, Hi-Z */
+  DDRD  &= ~_BV(PIN7);
+  PORTD &= ~_BV(PIN7);
 }
 
 uint8_t ir_scan(char* params_str)
 {
   uint8_t ret;
+
+  if(params_str == NULL)
+  {
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_REQUIRED, "param required");
+  }
 
   uint16_t period; /* period in us */
   period = atoi(params_str);
@@ -52,14 +56,13 @@ uint8_t ir_scan(char* params_str)
 
   switch(ret)
   {
-    case 0:
-      while(scan_state->end_flag==0); // wait for scan
-      break;
     case IRCTRL_ERR_PARAM_TOO_SMALL:
       RETURN_CMD_ERR_P(ret,"param too small");
     case IRCTRL_ERR_PARAM_TOO_LARGE:
       RETURN_CMD_ERR_P(ret,"param too large");
   }
+
+  while(scan_state->end_flag==0); // wait for scan
 
   /* print result data */
   char buf[5];
@@ -74,12 +77,12 @@ uint8_t ir_scan(char* params_str)
   println(buf);
 
   print_P("data       : ");
-  for(uint8_t i=0; i<scan_state->data_count; i++)
+  for(uint16_t i=0; i<scan_state->data_count; i++)
   {
-    uint8_t pos1, pos2;
+    uint16_t pos1, pos2;
     pos1 = i / 8;
     pos2 = i % 8;
-    char c = (scan_state->data[pos1]&_BV(pos2)) ? '1' : '0';
+    char c = (scan_state->data[pos1]&(1<<pos2)) ? '1' : '0';
     printc(c);
   }
   println_P("");
@@ -146,7 +149,6 @@ uint8_t start_scan(uint16_t period)
 
   /* initialize vars */
   scan_state->end_flag = 0;
-  scan_state->prev_state = 0xff;
   scan_state->cont_count = 0;
   scan_state->data_count = 0;
 
@@ -166,6 +168,7 @@ uint8_t start_scan(uint16_t period)
 
 void stop_scan()
 {
+  TCCR0B = 0x00; // stop timer
   TIMSK0 = 0x00; // stop interruption
   scan_state->end_flag = 1;
 }
@@ -174,30 +177,29 @@ void stop_scan()
 ISR(TIMER0_COMPA_vect)
 {
   uint8_t input;
-  input = (PIND & _BV(PD7))>>PD7;
+  input = ((PIND & _BV(PIN7))>>PIN7) ^ 1;
 
   // wait for first input
-  if(scan_state->prev_state == 0xff && input == 0)
+  if(scan_state->data_count == 0  && input == 0)
   {
     return;
   }
 
   // detect end of signal
-  if(input != scan_state->prev_state)
-  {
-    scan_state->cont_count = 0;
-  }
-  else
+  if(input == 0)
   {
     scan_state->cont_count++;
-    if(scan_state->cont_count == 0) // overflow
+    if(scan_state->cont_count == IRCTRL_END_CONT)
     {
+      scan_state->data_count -= scan_state->cont_count - 1;
       stop_scan();
       return;
     }
   }
-
-  scan_state->data_count++;
+  else
+  {
+    scan_state->cont_count = 0;
+  }
 
   uint8_t pos1, pos2;
   pos1 = scan_state->data_count / 8;
@@ -206,10 +208,13 @@ ISR(TIMER0_COMPA_vect)
   uint8_t data;
   data = scan_state->data[pos1];
 
-  scan_state->data[pos1] = ( data & ~(1<<pos2) ) | (input<<pos2);
+  scan_state->data[pos1] = (data & ~(1<<pos2)) | (input<<pos2);
 
-  if(scan_state->data_count == 255)
+  scan_state->data_count++;
+
+  if(scan_state->data_count == IRCTRL_BUF_LEN*8-1)
   {
+    scan_state->data_count -= scan_state->cont_count;
     stop_scan();
   }
 

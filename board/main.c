@@ -115,8 +115,11 @@ uint8_t exec_cmd(char* str)
   char* cmd_str;
   char* params_str;
 
-  cmd_str = str;
-  params_str = strtok_P(str,PSTR(""));
+  cmd_str = strtok_P(str,PSTR(" "));
+  params_str = strtok_P(NULL, PSTR(""));
+
+  /* skip spaces */
+  while( *params_str == ' ' ){ params_str++; }
 
   if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
