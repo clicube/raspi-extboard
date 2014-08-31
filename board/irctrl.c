@@ -11,24 +11,61 @@
 #define IRCTRL_STATE_SCAN 1
 #define IRCTRL_STATE_SEND 2
 
+#define IRCTRL_SEND_OPERATION_L 0
+#define IRCTRL_SEND_OPERATION_H 1
+#define IRCTRL_SEND_OPERATION_STOP 2
+
+#define IRCTRL_SEND_STATE_START 0
+#define IRCTRL_SEND_STATE_SEND_L 1
+#define IRCTRL_SEND_STATE_SEND_H 2
+#define IRCTRL_SEND_STATE_SEND_0_BIT0 3
+#define IRCTRL_SEND_STATE_SEND_0_BIT1 4
+#define IRCTRL_SEND_STATE_SEND_1_BIT0 5
+#define IRCTRL_SEND_STATE_SEND_1_BIT1 6
+#define IRCTRL_SEND_STATE_SEND_1_BIT2 7
+#define IRCTRL_SEND_STATE_SEND_1_BIT3 8
+
+
 uint8_t start_timer(uint16_t period);
 static inline void stop_timer();
 static inline uint8_t start_scan(uint16_t period);
 static inline void stop_scan(void);
+static inline uint8_t start_send(uint16_t period);
+static inline void stop_send(void);
 static inline void isr_scan(void);
 static inline void isr_send(void);
+
+/* TMP */
+char out_data[256];
+uint8_t out_len;
 
 struct _scan_state_t
 {
   volatile uint8_t end_flag;
   uint16_t cont_count;
   uint16_t data_count;
-  uint8_t data[IRCTRL_BUF_LEN];
+  uint8_t data[IRCTRL_SCAN_BUF_LEN];
 };
 typedef struct _scan_state_t scan_state_t;
 
+struct _send_state_t
+{
+  volatile uint8_t end_flag;
+  uint8_t ocr1a_L;
+  uint8_t ocr1a_H;
+  uint8_t state;
+  uint16_t cont_remain;
+  uint8_t next_operation;
+  char data[IRCTRL_SEND_BUF_LEN];
+  char* data_ptr;
+  uint8_t sending_char;
+  uint8_t sending_bit;
+};
+typedef struct _send_state_t send_state_t;
+
 uint8_t irctrl_state;
 scan_state_t* scan_state;
+send_state_t* send_state;
 
 
 void ir_init()
@@ -133,15 +170,31 @@ uint8_t ir_send(char* params_str)
   }
 
   // - receive data
-  char buf[512];
+  send_state_t ss;
+  send_state = &ss;
+
   print_P("data: ");
-  getln(buf,512);
-  println(buf);
+  getln(send_state->data, IRCTRL_SEND_BUF_LEN);
 
+  // send
+  ret = start_send(period);
 
-  // - start carrier
-  // - start timer
+  switch(ret)
+  {
+    case 0:
+      break;
+    case IRCTRL_ERR_PARAM_TOO_SMALL:
+      RETURN_CMD_ERR_P(ret,"param too small");
+    case IRCTRL_ERR_PARAM_TOO_LARGE:
+      RETURN_CMD_ERR_P(ret,"param too large");
+  }
+
   // - wait for complete sending
+  while(send_state->end_flag==0); // wait for scan
+
+  /* print test data */
+  out_data[out_len] = '\0';
+  dprintln(out_data);
 
   RETURN_CMD_OK;
 }
@@ -247,6 +300,40 @@ void stop_scan()
   scan_state->end_flag = 1;
 }
 
+uint8_t start_send(uint16_t period)
+{
+  out_len = 0;
+  uint8_t ret;
+
+  /* initialize vars */
+  send_state->end_flag = 0;
+  send_state->state = IRCTRL_SEND_STATE_START;
+  send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+  send_state->cont_remain = 1;
+  send_state->ocr1a_L = 0;
+  send_state->ocr1a_H = 0; /* TBD */
+  send_state->data_ptr = send_state->data;
+  send_state->sending_char = 0xFF;
+  send_state->sending_bit = 0;
+
+  // start carrier
+
+  // start timer
+  ret = start_timer(period);
+
+  if(ret == 0) {
+    irctrl_state = IRCTRL_STATE_SEND;
+  }
+
+  return ret;
+}
+
+void stop_send()
+{
+  stop_timer();
+  send_state->end_flag = 1;
+}
+
 // called every timer0A comp match */
 ISR(TIMER0_COMPA_vect)
 {
@@ -299,7 +386,7 @@ void isr_scan()
 
   scan_state->data_count++;
 
-  if(scan_state->data_count == IRCTRL_BUF_LEN*8-1)
+  if(scan_state->data_count == IRCTRL_SCAN_BUF_LEN*8-1)
   {
     scan_state->data_count -= scan_state->cont_count;
     stop_scan();
@@ -311,5 +398,198 @@ void isr_scan()
 
 void isr_send()
 {
+  /* change output */
+  switch(send_state->next_operation)
+  {
+    case IRCTRL_SEND_OPERATION_L:
+      //OCR1A = send_state->ocr1a_L;
+      out_data[out_len] = '0'; out_len++;
+      break;
+    case IRCTRL_SEND_OPERATION_H:
+      //OCR1A = send_state->ocr1a_H;
+      out_data[out_len] = '1'; out_len++;
+      break;
+    case IRCTRL_SEND_OPERATION_STOP:
+      stop_send();
+      return;
+  }
+
+  /* set next operation */
+  char c;
+  switch(send_state->state)
+  {
+    case IRCTRL_SEND_STATE_SEND_L:
+    case IRCTRL_SEND_STATE_SEND_H:
+      send_state->cont_remain--;
+      if(send_state->cont_remain > 0)
+      {
+        // keep next_operation
+        break;
+      }
+
+    case IRCTRL_SEND_STATE_START:
+    case IRCTRL_SEND_STATE_SEND_0_BIT1:
+    case IRCTRL_SEND_STATE_SEND_1_BIT3:
+      if(send_state->sending_char == 0xFF || send_state->sending_bit == 3)
+      {
+        c = *(send_state->data_ptr);
+        switch(c)
+        {
+          case '\0':
+            send_state->next_operation = IRCTRL_SEND_OPERATION_STOP;
+            break;
+          case 'L':
+          case 'H':
+            if(*(send_state->data_ptr+1) == '(')
+            {
+              /* replace ')' to '\0' */
+              char* tmp = send_state->data_ptr+1;
+              while( *tmp != ')' && *tmp != '\0'){ tmp++; }
+              if(*tmp == '\0') /* unexpected end of string */
+              {
+                stop_send();
+                return;
+              }
+              *tmp = '\0';
+
+              uint16_t cont;
+              cont = atoi(send_state->data_ptr+2);
+              if(cont == 0)
+              {
+                stop_send();
+                return;
+              }
+              send_state->cont_remain = cont;
+              send_state->data_ptr = tmp;
+            }
+            else
+            {
+              send_state->cont_remain = 1;
+            }
+            switch(c)
+            {
+              case 'L':
+                send_state->state = IRCTRL_SEND_STATE_SEND_L;
+                send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+                break;
+              case 'H':
+                send_state->state = IRCTRL_SEND_STATE_SEND_H;
+                send_state->next_operation = IRCTRL_SEND_OPERATION_H;
+                break;
+            }
+            break;
+          default:
+            switch(c){
+              case '0':
+                send_state->sending_char = 0x0;
+                break;
+              case '1':
+                send_state->sending_char = 0x1;
+                break;
+              case '2':
+                send_state->sending_char = 0x2;
+                break;
+              case '3':
+                send_state->sending_char = 0x3;
+                break;
+              case '4':
+                send_state->sending_char = 0x4;
+                break;
+              case '5':
+                send_state->sending_char = 0x5;
+                break;
+              case '6':
+                send_state->sending_char = 0x6;
+                break;
+              case '7':
+                send_state->sending_char = 0x7;
+                break;
+              case '8':
+                send_state->sending_char = 0x8;
+                break;
+              case '9':
+                send_state->sending_char = 0x9;
+                break;
+              case 'A':
+                send_state->sending_char = 0xA;
+                break;
+              case 'B':
+                send_state->sending_char = 0xB;
+                break;
+              case 'C':
+                send_state->sending_char = 0xC;
+                break;
+              case 'D':
+                send_state->sending_char = 0xD;
+                break;
+              case 'E':
+                send_state->sending_char = 0xE;
+                break;
+              case 'F':
+                send_state->sending_char = 0xF;
+                break;
+              default:
+                send_state->sending_char = 0xFF;
+                /* nop */
+            }
+            if(send_state->sending_char <= 0xF)
+            {
+              send_state->sending_bit = 0;
+              if(send_state->sending_char & 1<<3)
+              {
+                send_state->state = IRCTRL_SEND_STATE_SEND_1_BIT0;
+                send_state->next_operation = IRCTRL_SEND_OPERATION_H;
+              }
+              else
+              {
+                send_state->state = IRCTRL_SEND_STATE_SEND_0_BIT0;
+                send_state->next_operation = IRCTRL_SEND_OPERATION_H;
+              }
+            }
+        }
+        send_state->data_ptr++;
+      }
+      else /* sending_char != 0xFF && sending_bit < 3 */
+      {
+        send_state->sending_bit++;
+        if(send_state->sending_char & 1<<(3-send_state->sending_bit))
+        {
+          send_state->state = IRCTRL_SEND_STATE_SEND_1_BIT0;
+          send_state->next_operation = IRCTRL_SEND_OPERATION_H;
+        }
+        else
+        {
+          send_state->state = IRCTRL_SEND_STATE_SEND_0_BIT0;
+          send_state->next_operation = IRCTRL_SEND_OPERATION_H;
+        }
+        if(send_state->sending_bit == 3)
+        {
+          send_state->sending_char = 0xFF;
+          send_state->sending_bit = 0;
+        }
+      }
+      break;
+
+    case IRCTRL_SEND_STATE_SEND_0_BIT0:
+      send_state->state = IRCTRL_SEND_STATE_SEND_0_BIT1;
+      send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+      break;
+
+    case IRCTRL_SEND_STATE_SEND_1_BIT0:
+      send_state->state = IRCTRL_SEND_STATE_SEND_1_BIT1;
+      send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+      break;
+
+    case IRCTRL_SEND_STATE_SEND_1_BIT1:
+      send_state->state = IRCTRL_SEND_STATE_SEND_1_BIT2;
+      send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+      break;
+
+    case IRCTRL_SEND_STATE_SEND_1_BIT2:
+      send_state->state = IRCTRL_SEND_STATE_SEND_1_BIT3;
+      send_state->next_operation = IRCTRL_SEND_OPERATION_L;
+      break;
+  }
+
   return;
 }
