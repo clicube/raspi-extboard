@@ -1,6 +1,7 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include <avr/pgmspace.h>
 #include "lib/uart/uart.h"
 
 PROGMEM static const char CRLF_P[] = "\r\n";
@@ -23,5 +24,6 @@ PROGMEM static const char CRLF_P[] = "\r\n";
 #define RETURN_CMD_ERR_p(code,msg) print(__func__); print_P(": "); println_p(msg); return code
 #define RETURN_CMD_ERR_P(code,msg) print(__func__); println_P(": " msg);           return code
 
+void getln(char[], uint16_t);
 #endif
 

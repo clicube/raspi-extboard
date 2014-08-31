@@ -20,7 +20,7 @@
 DEVICE     = atmega88
 CLOCK      = 10000000
 PROGRAMMER = #-c stk500v2 -P avrdoper
-OBJECTS    = main.o irctrl.o tempctrl.o lib/uart/uart.o lib/i2cmaster/i2cmaster.o
+OBJECTS    = main.o irctrl.o tempctrl.o command.o lib/uart/uart.o lib/i2cmaster/i2cmaster.o
 FUSES      = #-U hfuse:w:0xd9:m -U lfuse:w:0x24:m
 
 SRCS := $(OBJECTS:%.o=%.c)

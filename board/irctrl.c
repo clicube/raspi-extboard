@@ -38,6 +38,10 @@ void ir_init()
   DDRD  &= ~_BV(PIN7);
   PORTD &= ~_BV(PIN7);
 
+  /* set PB3 to output, Low */
+  DDRB  |= _BV(PIN3);
+  PORTB &= ~_BV(PIN3);
+
   irctrl_state = IRCTRL_STATE_NOP;
 }
 
@@ -108,11 +112,37 @@ uint8_t ir_scan(char* params_str)
 
 uint8_t ir_send(char* params_str)
 {
+  uint8_t ret;
+
   // - check params
+  if(params_str == NULL)
+  {
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_REQUIRED, "param required");
+  }
+
+  uint16_t period; /* period in us */
+  period = atoi(params_str);
+
+  if(period <= 0)
+  {
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_INVALID, "invalid param");
+  }
+  else if(period > 5000)
+  {
+    RETURN_CMD_ERR_P(IRCTRL_ERR_PARAM_TOO_LARGE,"param too large");
+  }
+
   // - receive data
+  char buf[512];
+  print_P("data: ");
+  getln(buf,512);
+  println(buf);
+
+
   // - start carrier
   // - start timer
   // - wait for complete sending
+
   RETURN_CMD_OK;
 }
 

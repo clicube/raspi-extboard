@@ -18,7 +18,6 @@
 
 void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
 int main(void);
-void wait_for_cmd(char*);
 static inline uint8_t exec_cmd(char*);
 
 void wdt_init(void)
@@ -38,68 +37,18 @@ int main(void)
   sei();
 
   wdt_reset();
-  uart_puts_P("\r\n\r\n>>> RasPi-ExtBoard initialized <<<\r\n");
+  println_P("\r\n\r\n>>> RasPi-ExtBoard initialized <<<");
 
   char buf[LINE_MAX_LEN];
   uint8_t ret;
   for(;;)
   {
-    wait_for_cmd(buf);
+    print_P(PROMPT);
+    getln(buf,LINE_MAX_LEN);
     ret = exec_cmd(buf);
   }
 
   return 0;
-}
-
-void wait_for_cmd(char* buf)
-{
-  uint16_t c;
-  uint8_t buf_idx;
-
-  buf[0] = '\0';
-  buf_idx = 0;
-  uart_puts_P(PROMPT);
-
-  for(;;)
-  {
-    wdt_reset();
-    c = uart_getc();
-    if(c & UART_NO_DATA){ continue; }
-
-    if( c == '\n' || c == '\r' )
-    {
-      uart_puts_p(CRLF_P);
-      buf[buf_idx] = '\0';
-      return;
-    }
-    else if( c == '\b' || c == '\x7f')
-    {
-      if(buf_idx > 0)
-      {
-        buf[buf_idx] = '\0';
-        buf_idx--;
-        uart_puts_P("\b \b");
-      }
-      else
-      {
-        uart_putc('\a');
-      }
-
-    }
-    else if( 32 <= c && c <=126 )
-    {
-      if(buf_idx < LINE_MAX_LEN-1)
-      {
-        uart_putc((char)c);
-        buf[buf_idx] = (char)c;
-        buf_idx++;
-      }
-      else
-      {
-        uart_putc('\a');
-      }
-    }
-  }
 }
 
 uint8_t exec_cmd(char* str)
@@ -123,7 +72,7 @@ uint8_t exec_cmd(char* str)
 
   if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
-    uart_puts_P("available command: help reset temp_read ir_scan ir_send\r\n");
+    println_P("available command: help reset temp_read ir_scan ir_send");
     ret = 0;
   }
   else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
@@ -146,9 +95,8 @@ uint8_t exec_cmd(char* str)
   }
   else
   {
-    uart_puts_P("unknown command: ");
-    uart_puts(cmd_str);
-    uart_puts_p(CRLF_P);
+    print_P("unknown command: ");
+    println(cmd_str);
   }
 
   return ret;
