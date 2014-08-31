@@ -123,7 +123,7 @@ uint8_t exec_cmd(char* str)
 
   if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
-    uart_puts_P("available command: help reset temp_read ir_recv\r\n");
+    uart_puts_P("available command: help reset temp_read ir_scan\r\n");
     ret = 0;
   }
   else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
