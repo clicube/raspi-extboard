@@ -7,8 +7,16 @@
 #include "irctrl.h"
 #include "command.h"
 
-uint8_t start_scan(uint16_t period);
+#define IRCTRL_STATE_NOP 0
+#define IRCTRL_STATE_SCAN 1
+#define IRCTRL_STATE_SEND 2
+
+uint8_t start_timer(uint16_t period);
+static inline void stop_timer();
+static inline uint8_t start_scan(uint16_t period);
 static inline void stop_scan(void);
+static inline void isr_scan(void);
+static inline void isr_send(void);
 
 struct _scan_state_t
 {
@@ -19,7 +27,9 @@ struct _scan_state_t
 };
 typedef struct _scan_state_t scan_state_t;
 
+uint8_t irctrl_state;
 scan_state_t* scan_state;
+
 
 void ir_init()
 {
@@ -27,6 +37,8 @@ void ir_init()
   /* set PD7 to input, Hi-Z */
   DDRD  &= ~_BV(PIN7);
   PORTD &= ~_BV(PIN7);
+
+  irctrl_state = IRCTRL_STATE_NOP;
 }
 
 uint8_t ir_scan(char* params_str)
@@ -52,10 +64,13 @@ uint8_t ir_scan(char* params_str)
 
   scan_state_t ss;
   scan_state = &ss;
+
   ret = start_scan(period);
 
   switch(ret)
   {
+    case 0:
+      break;
     case IRCTRL_ERR_PARAM_TOO_SMALL:
       RETURN_CMD_ERR_P(ret,"param too small");
     case IRCTRL_ERR_PARAM_TOO_LARGE:
@@ -91,7 +106,17 @@ uint8_t ir_scan(char* params_str)
   RETURN_CMD_OK;
 }
 
-uint8_t start_scan(uint16_t period)
+uint8_t ir_send(char* params_str)
+{
+  // - check params
+  // - receive data
+  // - start carrier
+  // - start timer
+  // - wait for complete sending
+  RETURN_CMD_OK;
+}
+
+uint8_t start_timer(uint16_t period)
 {
   /* calculation OCR0A ( TOP value for timer0 )
    *         and CS0n  ( N: division raito for timer0 )
@@ -147,11 +172,6 @@ uint8_t start_scan(uint16_t period)
     return IRCTRL_ERR_PARAM_TOO_LARGE;
   }
 
-  /* initialize vars */
-  scan_state->end_flag = 0;
-  scan_state->cont_count = 0;
-  scan_state->data_count = 0;
-
   /* set register
    * Timer mode: CTC (WGM0n = 0b010)
    * Interrupt Enable (comp match) : OCIE0A = 1
@@ -166,15 +186,52 @@ uint8_t start_scan(uint16_t period)
   return 0;
 }
 
-void stop_scan()
+void stop_timer()
 {
   TCCR0B = 0x00; // stop timer
   TIMSK0 = 0x00; // stop interruption
+}
+
+uint8_t start_scan(uint16_t period)
+{
+  uint8_t ret;
+
+  /* initialize vars */
+  scan_state->end_flag = 0;
+  scan_state->cont_count = 0;
+  scan_state->data_count = 0;
+
+  ret = start_timer(period);
+
+  if(ret == 0) {
+    irctrl_state = IRCTRL_STATE_SCAN;
+  }
+
+  return ret;
+}
+
+void stop_scan()
+{
+  stop_timer();
+  irctrl_state = IRCTRL_STATE_NOP;
   scan_state->end_flag = 1;
 }
 
 // called every timer0A comp match */
 ISR(TIMER0_COMPA_vect)
+{
+  switch(irctrl_state)
+  {
+    case IRCTRL_STATE_SCAN:
+      isr_scan();
+      break;
+    case IRCTRL_STATE_SEND:
+      isr_send();
+      break;
+  }
+}
+
+void isr_scan()
 {
   uint8_t input;
   input = ((PIND & _BV(PIN7))>>PIN7) ^ 1;
@@ -220,4 +277,9 @@ ISR(TIMER0_COMPA_vect)
 
   return;
 
+}
+
+void isr_send()
+{
+  return;
 }

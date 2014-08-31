@@ -123,7 +123,7 @@ uint8_t exec_cmd(char* str)
 
   if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
-    uart_puts_P("available command: help reset temp_read ir_scan\r\n");
+    uart_puts_P("available command: help reset temp_read ir_scan ir_send\r\n");
     ret = 0;
   }
   else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
@@ -139,6 +139,10 @@ uint8_t exec_cmd(char* str)
   else if( strcmp_P(cmd_str, PSTR("ir_scan")) == 0)
   {
     ret = ir_scan(params_str);
+  }
+  else if( strcmp_P(cmd_str, PSTR("ir_send")) == 0)
+  {
+    ret = ir_send(params_str);
   }
   else
   {

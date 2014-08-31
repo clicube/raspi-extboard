@@ -15,5 +15,6 @@
 
 void ir_init(void);
 uint8_t ir_scan(char*);
+uint8_t ir_send(char*);
 
 #endif
