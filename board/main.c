@@ -41,6 +41,7 @@ int main(void)
 
   char buf[LINE_MAX_LEN];
   uint8_t ret;
+
   for(;;)
   {
     print_P(PROMPT);

@@ -38,6 +38,7 @@ static inline void isr_send(void);
 /* TMP */
 char out_data[256];
 uint8_t out_len;
+uint16_t out_count;
 
 struct _scan_state_t
 {
@@ -51,8 +52,8 @@ typedef struct _scan_state_t scan_state_t;
 struct _send_state_t
 {
   volatile uint8_t end_flag;
-  uint8_t ocr1a_L;
-  uint8_t ocr1a_H;
+  uint8_t ocr2a_L;
+  uint8_t ocr2a_H;
   uint8_t state;
   uint16_t cont_remain;
   uint8_t next_operation;
@@ -76,8 +77,8 @@ void ir_init()
   PORTD &= ~_BV(PIN7);
 
   /* set PB3 to output, Low */
-  DDRB  |= _BV(PIN3);
-  PORTB &= ~_BV(PIN3);
+  DDRD  |= _BV(PIN3);
+  PORTD &= ~_BV(PIN3);
 
   irctrl_state = IRCTRL_STATE_NOP;
 }
@@ -193,7 +194,8 @@ uint8_t ir_send(char* params_str)
   while(send_state->end_flag==0); // wait for scan
 
   /* print test data */
-  out_data[out_len] = '\0';
+  //out_data[out_len] = '\0';
+  ltoa(out_count,out_data,10);
   dprintln(out_data);
 
   RETURN_CMD_OK;
@@ -303,6 +305,7 @@ void stop_scan()
 uint8_t start_send(uint16_t period)
 {
   out_len = 0;
+  out_count = 0;
   uint8_t ret;
 
   /* initialize vars */
@@ -310,15 +313,63 @@ uint8_t start_send(uint16_t period)
   send_state->state = IRCTRL_SEND_STATE_START;
   send_state->next_operation = IRCTRL_SEND_OPERATION_L;
   send_state->cont_remain = 1;
-  send_state->ocr1a_L = 0;
-  send_state->ocr1a_H = 0; /* TBD */
+  send_state->ocr2a_L = 0;
+  send_state->ocr2a_H = 0; /* set lator */
   send_state->data_ptr = send_state->data;
   send_state->sending_char = 0xFF;
   send_state->sending_bit = 0;
 
-  // start carrier
 
-  // start timer
+  /* calculation OCR2A ( TOP value for timer2 )
+   *         and CS2n  ( N: division raito for timer2 )
+   *
+   * period = 1/freq
+   * freq = F_CPU/(N*(TOP+1))
+   * TOP = period*F_CPU/N-1
+   *
+   * freq = 38kHz
+   * TOP = (1/38k)*F_CPU/N-1
+   */
+
+  uint16_t tmp;
+  uint8_t top;
+  uint8_t cs2n;
+
+  tmp = F_CPU / 38000;
+
+  if( tmp <= 256 )
+  {
+    // N = 1
+    cs2n = 0b001;
+    top = tmp/1-1;
+  }
+  else
+  {
+    // N = 8
+    cs2n = 0b010;
+    top = tmp/8-1;
+    if(F_CPU/(8*(top+1))-38000 > 38000-F_CPU/(8*(top+2)))
+    {
+      top++;
+    }
+
+  }
+
+  /* set Timer 2
+   * Timer mode: Highspeed PWM (WGM2n = 0b111)
+   * Output B mode: non-inverted mode (COM2Bn = 0b10) => output on
+   *                or normal mode    (COM2Bn = 0b00) => output off
+   * No interruption
+   *
+   * ==> start timer
+   */
+  TCCR2A = 0b00000011;
+  TCCR2B = 0b00001000 | cs2n;
+  OCR2A = top;
+  OCR2B = top/3;
+  TIMSK2 = 0x00;
+
+  /* start timer */
   ret = start_timer(period);
 
   if(ret == 0) {
@@ -331,6 +382,11 @@ uint8_t start_send(uint16_t period)
 void stop_send()
 {
   stop_timer();
+
+  /* stop carrier */
+  TCCR2A &= ~0b00110000;
+
+
   send_state->end_flag = 1;
 }
 
@@ -402,12 +458,14 @@ void isr_send()
   switch(send_state->next_operation)
   {
     case IRCTRL_SEND_OPERATION_L:
-      //OCR1A = send_state->ocr1a_L;
-      out_data[out_len] = '0'; out_len++;
+      TCCR2A &= ~0b00110000;
+      //out_data[out_len] = '0'; out_len++;
+      out_count++;
       break;
     case IRCTRL_SEND_OPERATION_H:
-      //OCR1A = send_state->ocr1a_H;
-      out_data[out_len] = '1'; out_len++;
+      TCCR2A |= 0b00100000;
+      //out_data[out_len] = '1'; out_len++;
+      out_count++;
       break;
     case IRCTRL_SEND_OPERATION_STOP:
       stop_send();
