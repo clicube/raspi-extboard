@@ -9,6 +9,7 @@
 #include "lib/i2cmaster/i2cmaster.h"
 #include "irctrl.h"
 #include "tempctrl.h"
+#include "brictrl.h"
 #include "command.h"
 
 
@@ -34,6 +35,7 @@ int main(void)
   i2c_init();
   ir_init();
   temp_init();
+  bri_init();
   sei();
 
   wdt_reset();
@@ -73,7 +75,7 @@ uint8_t exec_cmd(char* str)
 
   if( strcmp_P(cmd_str, PSTR("help")) == 0)
   {
-    println_P("available command: help reset temp_read ir_scan ir_send");
+    println_P("available command: help reset temp_read ir_scan ir_send bri_read");
     ret = 0;
   }
   else if( strcmp_P(cmd_str, PSTR("reset")) == 0)
@@ -93,6 +95,10 @@ uint8_t exec_cmd(char* str)
   else if( strcmp_P(cmd_str, PSTR("ir_send")) == 0)
   {
     ret = ir_send(params_str);
+  }
+  else if( strcmp_P(cmd_str, PSTR("bri_read")) == 0)
+  {
+    ret = bri_read(params_str);
   }
   else
   {
