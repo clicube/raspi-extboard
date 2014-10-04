@@ -15,6 +15,8 @@
 #define IRCTRL_ERR_PARAM_TOO_SMALL 253
 #define IRCTRL_ERR_PARAM_TOO_LARGE 252
 
+#define IRCTRL_FREQ 36700
+
 void ir_init(void);
 uint8_t ir_scan(char*);
 uint8_t ir_send(char*);

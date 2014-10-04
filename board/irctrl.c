@@ -358,7 +358,7 @@ uint8_t start_send(uint16_t period)
   uint8_t top;
   uint8_t cs2n;
 
-  tmp = F_CPU / 38000;
+  tmp = F_CPU / IRCTRL_FREQ;
 
   if( tmp <= 256 )
   {
@@ -371,7 +371,7 @@ uint8_t start_send(uint16_t period)
     // N = 8
     cs2n = 0b010;
     top = tmp/8-1;
-    if(F_CPU/(8*(top+1))-38000 > 38000-F_CPU/(8*(top+2)))
+    if(F_CPU/(8*(top+1))-IRCTRL_FREQ > IRCTRL_FREQ-F_CPU/(8*(top+2)))
     {
       top++;
     }
