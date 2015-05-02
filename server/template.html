@@ -27,6 +27,17 @@
     font-weight: 300;
     font-size: Large;
 
+  }
+
+  body.light {
+    color: #222;
+    background: #69d;
+    background: -moz-linear-gradient(top center, #9df 0%, #69d 100%);
+    background: -webkit-gradient(linear, center top, center bottom, from(#9df), to(#69d));
+    background: linear-gradient(top center, #9df 0%, #69d 100%);
+  }
+
+  body.dark {
     color: #ddd;
     background: #024;
     background: -moz-linear-gradient(top center, #268 0%, #024 100%);
@@ -44,7 +55,7 @@
   }
 </style>
 </head>
-<body>
+<body class="$BODY_CLASS$">
   <div id="main">
     <h1>house.cubik.jp</h1>
     <p id="temp">$TEMP$ &deg;C</p>
