@@ -1,4 +1,4 @@
 #!/bin/bash -x
 
-ssh raspi ruby codes/house/record.rb
+ssh raspi "cd codes/house; bundle exec ruby update.rb"
 

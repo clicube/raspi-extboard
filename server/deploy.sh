@@ -1,5 +1,12 @@
 #!/bin/bash -x
 
-scp -r template.html graph_template.html record.rb Gemfile migrations deploy_local.sh sakura2:codes/house
-ssh sakura2 "cd codes/house; bash -x deploy_local.sh"
-
+scp -r Dockerfile app sakura1:docker/house
+ssh sakura1 "cd docker && 
+    docker-compose build house &&
+    docker-compose stop house &&
+    docker-compose rm -f house &&
+    docker-compose up -d house &&
+    docker-compose stop nginx &&
+    docker-compose rm -f nginx &&
+    docker-compose up -d nginx &&
+    docker-compose ps"
