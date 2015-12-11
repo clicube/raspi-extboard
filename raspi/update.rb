@@ -1,13 +1,13 @@
 require 'serialport'
 require 'timeout'
 require 'fileutils'
-require 'open-uri'
-require 'digest/sha1'
+require 'net/http'
+require 'uri'
 
 LOCK_FILE = "/tmp/serialport-lock"
 PROMPT = "RasPi-ExtBoard> "
 
-SALT_PATH = File.dirname(__FILE__) + "/salt.txt"
+BASIC_PATH = File.dirname(__FILE__) + "/basic.txt"
 
 def sp_read(sp)
   out = ""
@@ -98,25 +98,27 @@ def main
     exit -1
   end
 
-  puts "temp=#{tmp}"
-  puts "hum=#{hum}"
-  puts "bri=#{bri}"
-
-  salt = File.open(SALT_PATH){|f|f.gets}
-
   time = Time.now.to_i
+  
+  puts "temperature: #{tmp}"
+  puts "humidity   : #{hum}"
+  puts "brightness : #{bri}"
+  puts "time       : #{time}"
 
-  str = tmp.to_s + hum.to_s + bri.to_s + time.to_s + salt
-  secret = Digest::SHA1.hexdigest(str)
+  basic_user, basic_pass = File.open(BASIC_PATH){|f| f.gets.chomp }.split(":",2)
 
-  url = "http://house.cubik.jp/update?tmp=#{tmp}&hum=#{hum}&bri=#{bri}&time=#{time}&secret=#{secret}"
-  puts url
+  res = Net::HTTP.post_form(
+    URI.parse("http://#{basic_user}:#{basic_pass}@home.cubik.jp/api/v1/envs"),
+    {
+      temperature: tmp,
+      humidity: hum,
+      brightness: bri,
+      time: time
+    }
+  )
 
-  res = open(url){|f|f.read}
-
-  puts res
-return
-
+  puts res.body
+  return
 
 end
 

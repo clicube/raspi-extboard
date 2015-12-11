@@ -4,43 +4,35 @@ require 'digest/sha1'
 
 TEMPLATE_PATH = File.dirname(__FILE__) + "/template.html"
 OUTPUT_PATH = File.dirname(__FILE__) + "/public/index.html"
-SALT_PATH = File.dirname(__FILE__) + "/salt.txt"
+BASIC_PATH = File.dirname(__FILE__) + "/basic.txt"
 
 set :port, 80
 set :bind, "0.0.0.0"
 
-salt = File.open(SALT_PATH){|f|f.gets}
+BASIC_USER, BASIC_PASS = File.open(BASIC_PATH){|f| f.gets.chomp }.split(":",2)
 
-def get_param(params, name)
-  begin
-    Float(params[name])
-  rescue
-    nil
+helpers do
+  def protected!
+    unless authorized?
+      response['WWW-Authenticate'] = %(Basic realm="Restricted Area")
+      throw(:halt, [401, "Not authorized\n"])
+    end
+  end
+
+  def authorized?
+    @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+    @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == [BASIC_USER, BASIC_PASS]
   end
 end
 
-get '/update' do
+post '/api/v1/envs' do
 
-  tmp = params['tmp'].to_f
-  puts "tmp=#{tmp}"
+  protected!
 
-  hum = params['hum'].to_f
-  puts "hum=#{hum}"
-
-  bri = params['bri'].to_i
-  puts "bri=#{bri}"
-
+  tmp = params['temperature'].to_f
+  hum = params['humidity'].to_f
+  bri = params['brightness'].to_i
   time = params['time'].to_i
-  puts "time=#{time}"
-
-  # check secret
-  secret = params['secret']
-  puts "secret=#{secret}"
-
-  str = tmp.to_s + hum.to_s + bri.to_s + time.to_s + salt
-
-  secret_gen = Digest::SHA1.hexdigest(str)
-  halt 400 if secret != secret_gen
 
   html = File.open(TEMPLATE_PATH){|f|f.read}
   html.gsub!("$TEMP$", tmp.to_s)
@@ -54,9 +46,10 @@ get '/update' do
 
   File.open(OUTPUT_PATH, 'w'){|f| f.write html }
 
-  return { tmp: tmp, hum: hum, bri: bri }.to_json
+  return { tmperature: tmp, humidity: hum, brightness: bri, time: time }.to_json
 
 end
+
 
 get '/' do
   send_file File.join(settings.public_folder, 'index.html')
