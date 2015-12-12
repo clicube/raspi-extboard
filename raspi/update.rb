@@ -3,11 +3,27 @@ require 'timeout'
 require 'fileutils'
 require 'net/http'
 require 'uri'
+require 'json'
 
 LOCK_FILE = "/tmp/serialport-lock"
 PROMPT = "RasPi-ExtBoard> "
 
 BASIC_PATH = File.dirname(__FILE__) + "/basic.txt"
+IR_PATTERN_PATH = File.dirname(__FILE__) + "/ir_pattern.json"
+
+BASIC_USER, BASIC_PASS = File.open(BASIC_PATH){|f| f.gets.chomp }.split(":",2)
+
+def sp_lock
+  FileUtils.touch LOCK_FILE
+  timeout(10) do
+    File.open(LOCK_FILE) do |f|
+      f.flock(File::LOCK_EX)
+    end
+  end
+  yield
+ensure
+  FileUtils.rm LOCK_FILE
+end
 
 def sp_read(sp)
   out = ""
@@ -31,7 +47,8 @@ def sp_read(sp)
   end
 end
 
-def command(sp,str)
+
+def sp_command(sp, str)
 
   result = ""
 
@@ -55,27 +72,37 @@ def command(sp,str)
 end
 
 def main
+  update_envs
+  control_ac
+end
 
-  FileUtils.touch LOCK_FILE
+def update_envs
 
-  timeout(10) do
-    File.open(LOCK_FILE) do |f|
-      f.flock(File::LOCK_EX)
+  puts "#### update envs ####"
+
+  time = Time.now.to_i
+
+  temp_str = ""
+  bri_str = ""
+
+  sp_lock do
+
+    puts "## opening serial port ##"
+    sp = SerialPort.new('/dev/ttyAMA0', 9600, 8, 1, 0)
+    sp.read_timeout = 5000
+
+    begin
+
+      sp_command(sp,"")
+      temp_str = sp_command(sp,"temp_read")
+      bri_str = sp_command(sp,"bri_read")
+
+    ensure
+      sp.close
+      puts "## closed serial port ##"
     end
+
   end
-
-  puts "## opening serial port ##"
-  sp = SerialPort.new('/dev/ttyAMA0', 9600, 8, 1, 0)
-  sp.read_timeout = 5000
-
-  command(sp,"")
-  temp_str = command(sp,"temp_read")
-  bri_str = command(sp,"bri_read")
-
-  sp.close
-  FileUtils.rm LOCK_FILE
-  puts
-  puts "## closed serial port ##"
 
   if temp_str =~ /TMP: ([0-9]+)/
     tmp = ($1.to_f/10)
@@ -98,17 +125,14 @@ def main
     exit -1
   end
 
-  time = Time.now.to_i
-  
+  puts "time       : #{time}"
   puts "temperature: #{tmp}"
   puts "humidity   : #{hum}"
   puts "brightness : #{bri}"
-  puts "time       : #{time}"
 
-  basic_user, basic_pass = File.open(BASIC_PATH){|f| f.gets.chomp }.split(":",2)
 
   res = Net::HTTP.post_form(
-    URI.parse("http://#{basic_user}:#{basic_pass}@home.cubik.jp/api/v1/envs"),
+    URI.parse("http://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
     {
       temperature: tmp,
       humidity: hum,
@@ -122,4 +146,68 @@ def main
 
 end
 
+def control_ac
+
+  puts "#### control AC ####"
+
+  #### get commands from server ####
+  
+  base_uri = "http://home.cubik.jp/api/v1/ac/commands"
+
+  get_uri = URI.parse(base_uri)
+  http = Net::HTTP.new(get_uri.host, get_uri.port)
+  req = Net::HTTP::Get.new(get_uri.path)
+  res = http.start do |x|
+    x.request(req)
+  end
+  cmd_data = JSON.parse(res.body)
+
+  p cmd_data
+
+  return if cmd_data.length == 0
+
+  cmd_data.sort!{|a,b| a['id'] <=> b['id']}
+
+  cmd_last = cmd_data.last
+  cmd_type = cmd_last['command']
+
+  #### send ir pattern to AC ####
+  
+  ir_data = JSON.parse(File.open(IR_PATTERN_PATH){|f|f.read})
+  interval = ir_data['ac'][cmd_type]['interval']
+  pattern = ir_data['ac'][cmd_type]['pattern']
+
+  sp_lock do
+
+    puts "## opening serial port ##"
+    sp = SerialPort.new('/dev/ttyAMA0', 9600, 8, 1, 0)
+    sp.read_timeout = 5000
+
+    begin
+
+      sp_command(sp,"")
+      cmd = "ir_send #{interval}\n#{pattern}"
+      cmd_result = sp_command(sp, cmd)
+
+    ensure
+      sp.close
+      puts "## closed serial port ##"
+    end
+
+  end
+
+  #### delete commands on server ####
+
+  cmd_data.each do |c|
+
+    delete_uri = URI.parse("#{base_uri}/#{c['id']}")
+    req = Net::HTTP::Delete.new(delete_uri.path)
+    req.basic_auth(BASIC_USER, BASIC_PASS)
+    res = http.start do |x|
+      x.request(req)
+    end
+    puts res.body
+  end
+
+end
 main

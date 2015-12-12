@@ -1,5 +1,5 @@
 FROM cubing/ruby:2.2.3
-ADD app /root/app/Gemfile
+ADD app/Gemfile /root/app/
 RUN gem install bundler && \
     cd /root/app && \
     bundle install --system

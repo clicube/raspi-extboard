@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>home.cubik.jp/ac</title>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="">
+    <link rel="shortcut icon" href="">
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js"></script>
+    <link href="http://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <script src="http://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/bootstrap.min.js"></script>
+    <script>
+      $(function(){
+        $('#passcodeModal').on('show.bs.modal', function(event){
+          var button = $(event.relatedTarget)
+          $('#sendButton').data('command', button.data('command'));
+        });
+        $('#passcodeModal').on('shown.bs.modal', function(event){
+          $('#passcode').focus();
+        });
+        $('#sendButton').click(function(event){
+          var button = $(event.target);
+          var command = button.data('command');
+          var passcode = $('#passcode').val();
+          if(passcode.length == 0){ return; }
+
+          $.post('/api/v1/ac/commands',{
+            'command': command,
+            'passcode': passcode
+          });
+
+          $('#passcodeModal').modal('hide');
+        });
+        $(document).ajaxSuccess(function(){
+          var msg = $('<p><span class="label label-success">command send OK</span></p>');
+          $('#result').append(msg)
+          setTimeout(function(){
+            msg.remove();
+          },5000);
+        });
+        $(document).ajaxError(function(){
+          var msg = $('<p><span class="label label-danger">command send NG</span></p>');
+          $('#result').append(msg)
+          setTimeout(function(){
+            msg.remove();
+          },5000);
+        });
+      });
+    </script>
+    <style type="text/css">
+      #main {
+        width: 100;
+        margin: 10% 0;
+      }
+      .my-btn-group-xlg .btn{
+        padding: 40px 50px;
+        font-size: 36px;
+        border-radius: 16px;
+      }
+      #result {
+        font-size: 24px;
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main" class="text-center">
+      <div class="btn-group btn-group-lg my-btn-group-xlg" role="group">
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="on">On</button>
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="off">Off</button>
+      </div>
+      <div id="result"></div>
+    </div>
+    <div class="modal" id="passcodeModal" tabindex="-1" role="dialog" aria-labelledby="passcodeModalLabel" aria-hidden="true" data-show="true" data-keyboard="false" data-backdrop="static">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
+            </button>
+            <h4 class="modal-title">Enter Passcode</h4>
+          </div><!-- /modal-header -->
+          <div class="modal-body">
+            <input type="text" class="form-control" id="passcode" placeholder="Passcode" pattern="\d*" inputmode="numeric">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="sendButton">Send</button>
+          </div>
+        </div> <!-- /.modal-content -->
+      </div> <!-- /.modal-dialog -->
+    </div> <!-- /.modal -->
+  </body>
+</html>
