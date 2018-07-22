@@ -1,4 +1,4 @@
-FROM cubing/ruby:2.2.3
+FROM ruby
 ADD app/Gemfile /root/app/
 RUN gem install bundler && \
     cd /root/app && \
