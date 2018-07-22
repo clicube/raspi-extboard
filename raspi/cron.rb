@@ -132,7 +132,7 @@ def update_envs
 
 
   res = Net::HTTP.post_form(
-    URI.parse("http://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
+    URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
     {
       temperature: tmp,
       humidity: hum,
