@@ -156,6 +156,7 @@ def control_ac
 
   get_uri = URI.parse(base_uri)
   http = Net::HTTP.new(get_uri.host, get_uri.port)
+  http.use_ssl = true
   req = Net::HTTP::Get.new(get_uri.path)
   res = http.start do |x|
     x.request(req)
