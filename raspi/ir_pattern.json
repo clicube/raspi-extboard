@@ -1,11 +1,11 @@
 {
   "ac":{
     "on":{
-      "interval": 500,
+      "interval": 550,
       "pattern": "H(8)L(8)F20D03FC0170000071HL(3)L(8)H(8)L(8)F20D03FC0170000071H"
     },
     "off":{
-      "interval": ,
+      "interval": 550,
       "pattern": "H(8)L(8)F20D03FC0170070076HL(3)L(8)H(8)L(8)F20D03FC0170070076H"
     },
     "on_daikin":{
