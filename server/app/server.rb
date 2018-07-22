@@ -51,7 +51,7 @@ post '/api/v1/envs' do
   html.gsub!('$TEMP$', tmp.to_s)
   html.gsub!('$HUM$', hum.to_s)
 
-  if bri > 15
+  if bri > 10
     html.gsub!('$BODY_CLASS$', 'light')
   else
     html.gsub!('$BODY_CLASS$', 'dark')
