@@ -1,66 +1,147 @@
 <!DOCTYPE html>
+
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>home.cubik.jp</title>
-<meta charset="utf-8">
-<!--
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>home.cubik.jp</title>
+  <meta charset="utf-8">
+  <!--
 <meta name="description" content="">
 <meta name="author" content="">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="">
 <link rel="shortcut icon" href="">
 -->
-<link href='http://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" >
-<style type="text/css">
-  * {
-    margin: 0;
-    padding: 0;
-  }
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js"></script>
+  <link href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/bootstrap.min.js"></script>
+  <style type="text/css">
+    * {
+      margin: 0;
+      padding: 0;
+    }
 
-  html, body {
-    height: 100%;
-  }
+    html,
+    body {
+      height: 100%;
+    }
 
-  body {
-    font-family: 'Open Sans', sans-serif;
-    font-weight: 300;
-    font-size: Large;
+    body {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 300;
+      font-size: Large;
 
-  }
+    }
 
-  body.light {
-    color: #222;
-    background: #69d;
-    background: -moz-linear-gradient(top center, #9df 0%, #69d 100%);
-    background: -webkit-gradient(linear, center top, center bottom, from(#9df), to(#69d));
-    background: linear-gradient(top center, #9df 0%, #69d 100%);
-  }
+    body.light {
+      color: #222;
+      background: #69d;
+      background: -moz-linear-gradient(top center, #9df 0%, #69d 100%);
+      background: -webkit-gradient(linear, center top, center bottom, from(#9df), to(#69d));
+      background: linear-gradient(top center, #9df 0%, #69d 100%);
+    }
 
-  body.dark {
-    color: #ddd;
-    background: #024;
-    background: -moz-linear-gradient(top center, #268 0%, #024 100%);
-    background: -webkit-gradient(linear, center top, center bottom, from(#268), to(#024));
-    background: linear-gradient(top center, #268 0%, #024 100%);
-  }
+    body.dark {
+      color: #ddd;
+      background: #024;
+      background: -moz-linear-gradient(top center, #268 0%, #024 100%);
+      background: -webkit-gradient(linear, center top, center bottom, from(#268), to(#024));
+      background: linear-gradient(top center, #268 0%, #024 100%);
+    }
 
-  h1 {
-    padding: 10px;
-  }
+    p#temp,
+    p#hum {
+      padding: 10px 30px;
+      font-size: 48pt;
+    }
 
-  p#temp, p#hum {
-    padding: 10px 30px;
-    font-size: 48pt;
-  }
-</style>
+    .my-btn-group-xlg .btn {
+      padding: 40px 50px;
+      font-size: 36px;
+      border-radius: 16px;
+    }
+
+    #result {
+      font-size: 24px;
+      margin: 30px 0;
+    }
+
+    #control {
+      width: 100
+    }
+  </style>
+  <script>
+    $(function () {
+      $('#passcodeModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget)
+        $('#sendButton').data('command', button.data('command'));
+      });
+      $('#passcodeModal').on('shown.bs.modal', function (event) {
+        $('#passcode').focus();
+      });
+      $('#sendButton').click(function (event) {
+        var button = $(event.target);
+        var command = button.data('command');
+        var passcode = $('#passcode').val();
+        if (passcode.length == 0) { return; }
+
+        $.post('/api/v1/ac/commands', {
+          'command': command,
+          'passcode': passcode
+        });
+
+        $('#passcodeModal').modal('hide');
+      });
+      $(document).ajaxSuccess(function () {
+        var msg = $('<p><span class="label label-success">command send OK</span></p>');
+        $('#result').append(msg)
+        setTimeout(function () {
+          msg.remove();
+        }, 5000);
+      });
+      $(document).ajaxError(function () {
+        var msg = $('<p><span class="label label-danger">command send NG</span></p>');
+        $('#result').append(msg)
+        setTimeout(function () {
+          msg.remove();
+        }, 5000);
+      });
+    });
+  </script>
 </head>
+
 <body class="$BODY_CLASS$">
-  <div id="main">
-    <h1>home.cubik.jp</h1>
+  <div id="status">
     <p id="temp">$TEMP$ &deg;C</p>
     <p id="hum">$HUM$ %</p>
   </div>
+  <div id="control" class="text-center">
+    <div class="btn-group btn-group-lg my-btn-group-xlg" role="group">
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="on">On</button>
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="off">Off</button>
+    </div>
+    <div id="result"></div>
+  </div>
+  <div class="modal" id="passcodeModal" tabindex="-1" role="dialog" aria-labelledby="passcodeModalLabel" aria-hidden="true" data-show="true" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&#215;</span><span class="sr-only">Close</span>
+          </button>
+          <h4 class="modal-title">Enter Passcode</h4>
+        </div><!-- /modal-header -->
+        <div class="modal-body">
+          <input type="text" class="form-control" id="passcode" placeholder="Passcode" pattern="\d*" inputmode="numeric">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="sendButton">Send</button>
+        </div>
+      </div> <!-- /.modal-content -->
+    </div> <!-- /.modal-dialog -->
+  </div> <!-- /.modal -->
 </body>
-</html>
 
+</html>
