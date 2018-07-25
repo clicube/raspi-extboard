@@ -148,6 +148,8 @@ def update_envs
   begin
     statsd = Datadog::Statsd.new('localhost', 8125)
     statsd.gauge('home.env.temperature', tmp)
+    statsd.gauge('home.env.humidity', hum)
+    statsd.gauge('home.env.brightness', bri)
   rescue => e
     p e
   end
