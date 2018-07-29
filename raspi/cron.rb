@@ -4,6 +4,7 @@ require 'fileutils'
 require 'net/http'
 require 'uri'
 require 'json'
+require 'datadog/statsd'
 
 LOCK_FILE = "/tmp/serialport-lock"
 PROMPT = "RasPi-ExtBoard> "
@@ -142,6 +143,17 @@ def update_envs
   )
 
   puts res.body
+
+  ## send to datadog
+  begin
+    statsd = Datadog::Statsd.new('localhost', 8125)
+    statsd.gauge('home.env.temperature', tmp)
+    statsd.gauge('home.env.humidity', hum)
+    statsd.gauge('home.env.brightness', bri)
+  rescue => e
+    p e
+  end
+
   return
 
 end
