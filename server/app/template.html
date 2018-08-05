@@ -52,20 +52,11 @@
       font-size: 48pt;
     }
 
-    .my-btn-group-xlg .btn {
-      padding: 40px 50px;
-      font-size: 36px;
-      border-radius: 16px;
-    }
-
     #result {
       font-size: 24px;
       margin: 30px 0;
     }
 
-    #control {
-      width: 100
-    }
   </style>
   <script>
     $(function () {
@@ -113,15 +104,22 @@
   </script>
 </head>
 
-<body class="$BODY_CLASS$">
+<body class="$BODY_CLASS$ text-center">
   <div id="status">
     <p id="temp">$TEMP$ &deg;C</p>
     <p id="hum">$HUM$ %</p>
   </div>
   <div id="control" class="text-center">
-    <div class="btn-group btn-group-lg my-btn-group-xlg" role="group">
-      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="on">On</button>
-      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="off">Off</button>
+    <h2>エアコン</h2>
+    <div class="btn-group btn-group-lg" role="group" aria-label="air">
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="air-on">自動</button>
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="air-off">オフ</button>
+    </div>
+    <h2>ライト</h2>
+    <div class="btn-group btn-group-lg" role="group" aria-label="light">
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="light-on">全光</button>
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="light-on">シーン</button>
+      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#passcodeModal" data-command="light-off">オフ</button>
     </div>
     <div id="result"></div>
   </div>
