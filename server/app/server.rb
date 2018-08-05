@@ -5,6 +5,7 @@ require 'yaml'
 BASIC_PATH = File.join(File.dirname(__FILE__) , "basic.txt")
 PASSCODE_PATH = File.join(File.dirname(__FILE__) , "passcode.txt")
 CMD_FILE_PATH = File.join(File.dirname(__FILE__) , "command.json")
+DATA_PATH = File.join(File.dirname(__FILE__) , "latest.json")
 TEMPLATE_PATH = File.join(File.dirname(__FILE__) , "template.html")
 INDEX_PATH = File.join(settings.public_folder , "index.html")
 
@@ -38,6 +39,15 @@ helpers do
   end
 end
 
+get '/api/v1/envs' do
+  begin
+    str = File.open(DATA_PATH){|f| f.read }
+    return str
+  rescue
+    return "{}"
+  end
+end
+
 post '/api/v1/envs' do
 
   protected!
@@ -46,6 +56,15 @@ post '/api/v1/envs' do
   tmp = params['temperature'].to_f
   hum = params['humidity'].to_f
   bri = params['brightness'].to_i
+
+  data = {
+    time: time,
+    temperature: tmp,
+    humidity: hum,
+    brightness: bri
+  }
+
+  File.open(DATA_PATH, 'w'){|f| f.write(data.to_json) }
 
   html = File.open(TEMPLATE_PATH){|f|f.read}
   html.gsub!('$TEMP$', tmp.to_s)
@@ -62,7 +81,7 @@ post '/api/v1/envs' do
   headers 'Location' => "/api/v1/ac/commands/#{time}"
   status 201
 
-  return { time: time, tmperature: tmp, humidity: hum, brightness: bri }.to_json
+  return data.to_json
 
 end
 

@@ -1,19 +1,23 @@
+<template>
+    <div id="app">
+        <status/>
+        <button type="button" @click="update()">update!!</button>
+    </div>
+</template>
+
 <script>
-    import control from './control'
+    import status from './status'
     export default {
-        components: {control}
+        components: { status },
+        methods: {
+            update: function() {
+                console.log("update click")
+                this.$store.dispatch('envs/update')
+            }
+        }
     }
 </script>
 
-<template>
-    <v-app id="app">
-        <control/>
-    </v-app>
-</template>
-
 <style scoped>
-    #app {
-        padding: 20px;
-    }
 </style>
 
