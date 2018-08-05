@@ -6,3 +6,6 @@ vendor/
 Gemfile.lock
 
 *.sqlite3
+
+.idea/
+*.iml

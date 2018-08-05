@@ -1,21 +1,24 @@
 {
   "ac":{
-    "on":{
+    "air-on":{
       "interval": 550,
       "pattern": "H(8)L(8)F20D03FC0170000071HL(3)L(8)H(8)L(8)F20D03FC0170000071H"
     },
-    "off":{
+    "air-off":{
       "interval": 550,
       "pattern": "H(8)L(8)F20D03FC0170070076HL(3)L(8)H(8)L(8)F20D03FC0170070076H"
     },
-    "on_daikin":{
-      "interval": 440,
-      "pattern": "HLHLHLHLHLHLL(57)H(8)L(4)885BE400A30000EBHL(79)H(8)L(4)885BE4004200002AHL(79)H(8)L(4)885BE400009003010500006006000083010045H"
+    "light-on-full":{
+      "interval": 550,
+      "pattern": "H(8)L(4)E730E916H"
     },
-    "off_daikin":{
-      "interval": 440,
-      "pattern": "HLHLHLHLHLHLL(57)H(8)L(4)885BE400A30000EBHL(79)H(8)L(4)885BE4004200002AHL(79)H(8)L(4)885BE400001003010500006006000083010085H"
-    }
+    "light-on-scene":{
+      "interval": 550,
+      "pattern": "H(8)L(4)E73045BAH"
+    },
+    "light-off":{
+      "interval": 550,
+      "pattern": "H(8)L(4)E730D12EH"
+    },
   }
 }
-
