@@ -12,7 +12,7 @@
                     </v-card-actions>
                 </v-card>
                 <v-card class="controlCard">
-                    <h2 class="headline">ライト</h2>
+                    <h2 class="headline">ライト!</h2>
                     <v-btn large>ON</v-btn>
                     <v-btn large>OFF</v-btn>
                 </v-card>
@@ -34,6 +34,7 @@
         methods: {
             onRemoconButtonClick: function () {
                 this.isControlsVisible = !this.isControlsVisible
+                console.log(this)
             }
         }
     }
