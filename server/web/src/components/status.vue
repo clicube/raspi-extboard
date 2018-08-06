@@ -6,8 +6,14 @@
 </template>
 
 <script>
-    import { mapGetters } from 'vuex'
     export default {
-        computed: mapGetters('envs', [ 'temperature', 'humidity' ])
+        computed: {
+            temperature: function(){
+                return this.$store.getters["envs/temperature"] || "--"
+            },
+            humidity: function(){
+                return this.$store.getters["envs/humidity"] || "--"
+            }
+        }
     }
 </script>

@@ -1,19 +1,26 @@
 <template>
     <div id="app">
-        <status/>
         <button type="button" @click="update()">update!!</button>
+        <status/>
     </div>
 </template>
 
 <script>
+
+    function update(store){
+        store.dispatch('envs/update')
+    }
+
     import status from './status'
     export default {
         components: { status },
         methods: {
             update: function() {
-                console.log("update click")
-                this.$store.dispatch('envs/update')
+                update(this.$store)
             }
+        },
+        mounted: function() {
+            update(this.$store)
         }
     }
 </script>

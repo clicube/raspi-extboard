@@ -1,9 +1,17 @@
 #!/bin/bash -x
 cd `dirname $0`
 
+if [ -n "${1}" ]; then
+    mode=${1}
+elif [ -n "${MODE}" ]; then
+    mode=${MODE}
+else
+    mode=development
+fi
+
 cd web
 rm dist/bundle.js
-npx webpack
+npx webpack --mode=${mode}
 cd ..
 
 scp -r Dockerfile app sakura1:docker/compose/services/home
