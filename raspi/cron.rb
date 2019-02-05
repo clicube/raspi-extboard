@@ -131,6 +131,17 @@ def update_envs
   puts "humidity   : #{hum}"
   puts "brightness : #{bri}"
 
+  res = Net::HTTP.post_form(
+    URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@asia-northeast1-mosho-166cd.cloudfunctions.net/api/v1/envs"),
+    {
+      temperature: tmp,
+      humidity: hum,
+      brightness: bri,
+      time: time
+    }
+  )
+
+  puts res.body
 
   res = Net::HTTP.post_form(
     URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
