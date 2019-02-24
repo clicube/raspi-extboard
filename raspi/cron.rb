@@ -73,8 +73,23 @@ def sp_command(sp, str)
 end
 
 def main
-  update_envs
-  control_ac
+  begin
+    update_envs
+  rescue => e
+    p e
+  end
+
+  begin
+    control_ac("https://home.cubik.jp/api/v1/ac/commands")
+  rescue => e
+    p e
+  end
+
+  begin
+    control_ac("https://asia-northeast1-mosho-166cd.cloudfunctions.net/api/v1/ac/commands")
+  rescue => e
+    p e
+  end
 end
 
 def update_envs
@@ -131,18 +146,21 @@ def update_envs
   puts "humidity   : #{hum}"
   puts "brightness : #{bri}"
 
+  begin
+    res = Net::HTTP.post_form(
+      URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
+      {
+        temperature: tmp,
+        humidity: hum,
+        brightness: bri,
+        time: time
+      }
+    )
 
-  res = Net::HTTP.post_form(
-    URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
-    {
-      temperature: tmp,
-      humidity: hum,
-      brightness: bri,
-      time: time
-    }
-  )
-
-  puts res.body
+    puts res.body
+  rescue => e
+    p e
+  end
 
   ## send to datadog
   begin
@@ -154,18 +172,32 @@ def update_envs
     p e
   end
 
+  begin
+    res = Net::HTTP.post_form(
+      URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@asia-northeast1-mosho-166cd.cloudfunctions.net/api/v1/envs"),
+      {
+        temperature: tmp,
+        humidity: hum,
+        brightness: bri,
+        time: time
+      }
+    )
+
+    puts res.body
+  rescue => e
+    p e
+  end
+
   return
 
 end
 
-def control_ac
+def control_ac(base_uri)
 
   puts "#### control AC ####"
 
   #### get commands from server ####
   
-  base_uri = "https://home.cubik.jp/api/v1/ac/commands"
-
   get_uri = URI.parse(base_uri)
   http = Net::HTTP.new(get_uri.host, get_uri.port)
   http.use_ssl = true
