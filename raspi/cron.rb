@@ -73,23 +73,25 @@ def sp_command(sp, str)
 end
 
 def main
-  begin
-    update_envs
-  rescue => e
-    p e
+
+  opt = ARGV[0]
+
+  if opt == "envs"
+    begin
+      update_envs
+    rescue => e
+      p e
+    end
   end
 
-  begin
-    control_ac("https://home.cubik.jp/api/v1/ac/commands")
-  rescue => e
-    p e
+  if opt == "cmd"
+    begin
+      control_ac("https://asia-northeast1-mosho-166cd.cloudfunctions.net/api/v1/ac/commands")
+    rescue => e
+      p e
+    end
   end
 
-  begin
-    control_ac("https://asia-northeast1-mosho-166cd.cloudfunctions.net/api/v1/ac/commands")
-  rescue => e
-    p e
-  end
 end
 
 def update_envs
@@ -145,22 +147,6 @@ def update_envs
   puts "temperature: #{tmp}"
   puts "humidity   : #{hum}"
   puts "brightness : #{bri}"
-
-  begin
-    res = Net::HTTP.post_form(
-      URI.parse("https://#{BASIC_USER}:#{BASIC_PASS}@home.cubik.jp/api/v1/envs"),
-      {
-        temperature: tmp,
-        humidity: hum,
-        brightness: bri,
-        time: time
-      }
-    )
-
-    puts res.body
-  rescue => e
-    p e
-  end
 
   ## send to datadog
   begin
