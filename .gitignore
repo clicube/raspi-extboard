@@ -9,3 +9,5 @@ Gemfile.lock
 
 .idea/
 *.iml
+
+.vscode/
