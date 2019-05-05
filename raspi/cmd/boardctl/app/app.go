@@ -3,8 +3,8 @@ package app
 import (
 	"flag"
 	"fmt"
-	"raspi-extboard-raspi/pkg/board"
-	// "raspi-extboard-raspi/pkg/moshoapi"
+	"raspi-extboard-raspi/infrastructure"
+	"raspi-extboard-raspi/usecase"
 )
 
 func Execute() error {
@@ -13,16 +13,12 @@ func Execute() error {
 	command := flag.Arg(0)
 	switch command {
 	case "envs":
-		_, err := board.GetEnvs(nil)
-		if err != nil {
-			return err
+		recEnv := usecase.RecordEnv{
+			EnvGetter: &infrastructure.Board{},
 		}
-		// datadog.Upload(envs)
-		// moshoapi.Upload(envs)
-
+		recEnv.Invoke()
 		return nil
 	case "cmd":
-		//board.GetEnvs()
 		return nil
 	case "":
 		return fmt.Errorf("Command required")

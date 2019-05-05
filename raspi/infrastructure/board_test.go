@@ -1,14 +1,20 @@
-package board
+package infrastructure
 
 import (
 	"bytes"
-	// "context"
 	"testing"
 	"time"
 )
 
+type MockPortCreator struct{
+	creator func() (IoPort, error)
+}
+
+func (c *MockPortCreator) Create() (IoPort, error) {
+	return c.creator()
+}
+
 type MockPort struct {
-	Port
 	onRead  func([]byte) (int, error)
 	onWrite func([]byte) (int, error)
 	onClose func() error
@@ -26,6 +32,7 @@ func (p MockPort) Close() error {
 
 func TestGetEnvsOk(t *testing.T) {
 
+	// Arrange
 	internalBuf := bytes.Buffer{}
 	readBuf := bytes.Buffer{}
 	miniBuf := make([]byte, 4)
@@ -67,7 +74,20 @@ func TestGetEnvsOk(t *testing.T) {
 		},
 	}
 
-	res, err := GetEnvs(port)
+	portCreator := &MockPortCreator {
+		creator: func() (IoPort, error){
+			return port, nil
+		},
+	}
+
+	sut := &Board{
+		portCreator: portCreator,
+	}
+
+	// Act
+	res, err := sut.GetEnv()
+
+	// Assert
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +117,16 @@ func TestGetEnvsTimeout(t *testing.T) {
 		},
 	}
 
-	_, err := GetEnvs(port)
+		portCreator := &MockPortCreator {
+		creator: func() (IoPort, error){
+			return port, nil
+		},
+	}
+
+	sut := &Board{
+		portCreator: portCreator,
+	}
+	_, err := sut.GetEnv()
 	if err == nil {
 		t.Fatal("Timeout is not occured")
 	}
