@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type MockPortCreator struct{
+type MockPortCreator struct {
 	creator func() (IoPort, error)
 }
 
@@ -74,15 +74,13 @@ func TestGetEnvsOk(t *testing.T) {
 		},
 	}
 
-	portCreator := &MockPortCreator {
-		creator: func() (IoPort, error){
+	portCreator := &MockPortCreator{
+		creator: func() (IoPort, error) {
 			return port, nil
 		},
 	}
 
-	sut := &Board{
-		portCreator: portCreator,
-	}
+	sut := &Board{portCreator}
 
 	// Act
 	res, err := sut.GetEnv()
@@ -117,15 +115,13 @@ func TestGetEnvsTimeout(t *testing.T) {
 		},
 	}
 
-		portCreator := &MockPortCreator {
-		creator: func() (IoPort, error){
+	portCreator := &MockPortCreator{
+		creator: func() (IoPort, error) {
 			return port, nil
 		},
 	}
 
-	sut := &Board{
-		portCreator: portCreator,
-	}
+	sut := &Board{portCreator}
 	_, err := sut.GetEnv()
 	if err == nil {
 		t.Fatal("Timeout is not occured")
