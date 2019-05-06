@@ -38,6 +38,5 @@ func invokeEnvs() error {
 		EnvGetter:   envGetter,
 		EnvRecorder: envRecorder,
 	}
-	recEnv.Invoke()
-	return nil
+	return recEnv.Invoke()
 }

@@ -10,10 +10,15 @@ func EnvGetter() (domain.EnvGetter, error) {
 }
 
 func EnvRecorder() (domain.EnvRecorder, error) {
+	datadog, err := infrastructure.NewDatadog()
+	if err != nil {
+		return nil, err
+	}
+	moshoapi, err := infrastructure.NewMoshoApi()
+	if err != nil {
+		return nil, err
+	}
 	return &infrastructure.MultiEnvRecorder{
-		Recorders: []domain.EnvRecorder{
-			&infrastructure.MoshoApi{},
-			&infrastructure.Datadog{},
-		},
+		Recorders: []domain.EnvRecorder{moshoapi, datadog},
 	}, nil
 }
