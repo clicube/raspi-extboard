@@ -88,6 +88,19 @@ func (b *Board) GetEnv() (*domain.Env, error) {
 	}, nil
 }
 
+func (b *Board) SendIr(data *domain.IrData) error {
+	log.Println("Sending IR from the board ...")
+
+	res, err := execCommand(b.portCreator, fmt.Sprintf("ir_send %d\n%s", data.Interval, data.Pattern))
+	if err != nil {
+		log.Println("Error: Failed to execute: ir_send")
+		return err
+	}
+	log.Println("Board response: ", res)
+
+	return nil
+}
+
 func lock() (*flock.Flock, error) {
 	fileLock := flock.New(lockFilePath)
 	err := fileLock.Lock()

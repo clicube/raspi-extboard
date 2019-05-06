@@ -19,6 +19,18 @@ func EnvRecorder() (domain.EnvRecorder, error) {
 		return nil, err
 	}
 	return &infrastructure.MultiEnvRecorder{
-		Recorders: []domain.EnvRecorder{moshoapi, datadog},
+		Recorders: []domain.EnvRecorder{datadog, moshoapi},
 	}, nil
+}
+
+func IrCommandRepository() (domain.IrCommandRepository, error) {
+	return infrastructure.NewMoshoApi()
+}
+
+func IrDataRepository() (domain.IrDataRepository, error) {
+	return infrastructure.NewIrDataFile("ir_pattern.json")
+}
+
+func IrDataSender() (domain.IrDataSender, error) {
+	return &infrastructure.Board{}, nil
 }

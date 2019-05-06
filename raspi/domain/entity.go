@@ -7,6 +7,11 @@ type Env struct {
 }
 
 type IrData struct {
-	Data   string
-	Period int
+	Pattern  string
+	Interval int
+}
+
+type IrCommand struct {
+	Id      int64
+	Command string
 }

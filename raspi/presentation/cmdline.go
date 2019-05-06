@@ -16,7 +16,7 @@ func CmdlineExecute() error {
 	case "envs":
 		return invokeEnvs()
 	case "cmd":
-		return nil
+		return invokeCmd()
 	case "":
 		return fmt.Errorf("Command required")
 	default:
@@ -39,4 +39,29 @@ func invokeEnvs() error {
 		EnvRecorder: envRecorder,
 	}
 	return recEnv.Invoke()
+}
+
+func invokeCmd() error {
+	irCommandRepository, err := registory.IrCommandRepository()
+	if err != nil {
+		return err
+	}
+
+	irDataRepository, err := registory.IrDataRepository()
+	if err != nil {
+		return err
+	}
+
+	irDataSender, err := registory.IrDataSender()
+	if err != nil {
+		return err
+	}
+
+	sendIr := usecase.SendIr{
+		IrCommandRepository: irCommandRepository,
+		IrDataRepository:    irDataRepository,
+		IrDataSender:        irDataSender,
+	}
+
+	return sendIr.Invoke()
 }
