@@ -8,7 +8,7 @@ import (
 )
 
 type MultiEnvRecorder struct {
-	recorders []domain.EnvRecorder
+	Recorders []domain.EnvRecorder
 }
 
 type MultiEnvRecorderError struct {
@@ -25,7 +25,7 @@ func (e *MultiEnvRecorderError) Error() string {
 
 func (r *MultiEnvRecorder) RecordEnv(env *domain.Env) error {
 	errs := []error{}
-	for _, recorder := range r.recorders {
+	for _, recorder := range r.Recorders {
 		err := recorder.RecordEnv(env)
 		if err != nil {
 			errs = append(errs, err)

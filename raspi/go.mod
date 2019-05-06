@@ -3,6 +3,7 @@ module raspi-extboard-raspi
 go 1.12
 
 require (
+	github.com/DataDog/datadog-go v2.2.0+incompatible
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/goburrow/serial v0.1.0
 	github.com/gofrs/flock v0.7.1

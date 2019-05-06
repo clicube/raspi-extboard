@@ -18,7 +18,6 @@ func (u *RecordEnv) Invoke() error {
 		log.Println("Error: Failed to get env")
 		return err
 	}
-	log.Println(env)
-	// err = u.EnvRecorder.RecordEnv(env)
+	err = u.EnvRecorder.RecordEnv(env)
 	return err
 }

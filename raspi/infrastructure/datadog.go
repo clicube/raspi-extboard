@@ -1,11 +1,14 @@
 package infrastructure
 
 import (
+	"log"
+
 	"raspi-extboard-raspi/domain"
 )
 
-type DataDog struct{}
+type Datadog struct{}
 
-func (d *DataDog) RecordEnv(env *domain.Env) error {
+func (d *Datadog) RecordEnv(env *domain.Env) error {
+	log.Printf("Datadog.RecordEnv() invoked: %+v", env)
 	return nil
 }
