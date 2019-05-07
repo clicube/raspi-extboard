@@ -50,35 +50,32 @@ type Board struct {
 }
 
 func (b *Board) GetEnv() (*domain.Env, error) {
-	log.Println("Getting Envs from the board ...")
 
 	tempHumRes, err := execCommand(b.portCreator, "temp_read")
 	if err != nil {
-		log.Println("Error: Failed to execute: temp_read")
-		return nil, err
+		return nil, fmt.Errorf("Failed to execute temp_read: %s", err)
 	}
 
 	temp, err := parseResult(tempHumRes, reTmp, "Tempreture")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to parse temp: %s", err)
 	}
 	temp /= 10
 
 	hum, err := parseResult(tempHumRes, reHum, "Humidity")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to parse hum: %s", err)
 	}
 	hum /= 10
 
 	briRes, err := execCommand(b.portCreator, "bri_read")
 	if err != nil {
-		log.Println("Error: Failed to execute: bri_read")
-		return nil, err
+		return nil, fmt.Errorf("Failed to execute bri_read: %s", err)
 	}
 
 	bri, err := parseResult(briRes, reBri, "Brightness")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to parse bri: %s", err)
 	}
 
 	return &domain.Env{
@@ -89,14 +86,11 @@ func (b *Board) GetEnv() (*domain.Env, error) {
 }
 
 func (b *Board) SendIr(data *domain.IrData) error {
-	log.Println("Sending IR from the board ...")
 
-	res, err := execCommand(b.portCreator, fmt.Sprintf("ir_send %d\n%s", data.Interval, data.Pattern))
+	_, err := execCommand(b.portCreator, fmt.Sprintf("ir_send %d\n%s", data.Interval, data.Pattern))
 	if err != nil {
-		log.Println("Error: Failed to execute: ir_send")
-		return err
+		return fmt.Errorf("Failed to execute ir_send: %s", err)
 	}
-	log.Println("Board response: ", res)
 
 	return nil
 }
@@ -105,25 +99,21 @@ func lock() (*flock.Flock, error) {
 	fileLock := flock.New(lockFilePath)
 	err := fileLock.Lock()
 	if err != nil {
-		log.Printf("Error: Failed to lock the lock file: %s", lockFilePath)
-		return nil, err
+		return nil, fmt.Errorf("Failed to lock the lock file %s: %s", lockFilePath, err)
 	}
-	log.Printf("Locked lock file: %s", lockFilePath)
 	return fileLock, nil
 }
 
 func unlock(fileLock *flock.Flock) error {
-	log.Printf("Unlocked lock file: %s", lockFilePath)
 	return fileLock.Unlock()
 }
 
 func execCommand(portCreatorArg IoPortCreator, cmd string) (string, error) {
-	log.Printf("Executing command ... : %s", cmd)
 
 	// Take a lock
 	lock, err := lock()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Failed to lock: %s", err)
 	}
 	defer unlock(lock)
 
@@ -134,11 +124,9 @@ func execCommand(portCreatorArg IoPortCreator, cmd string) (string, error) {
 	} else {
 		portCreator = portCreatorArg
 	}
-	log.Println("Opening port ... ")
 	port, err := portCreator.Create()
 	if err != nil {
-		log.Println("Error: Failed to open port")
-		return "", err
+		return "", fmt.Errorf("Failed to open port: %s", err)
 	}
 	defer port.Close()
 
@@ -148,23 +136,20 @@ func execCommand(portCreatorArg IoPortCreator, cmd string) (string, error) {
 	ch := make(chan string, 1)
 
 	go func() {
-		log.Println("Writing to port ... ")
 		_, err = port.Write([]byte(cmd + "\n"))
 		if err != nil {
-			log.Println("Error: Failed to write to port")
+			log.Printf("Failed to write to port: %s", err)
 			cancel()
 		}
 
-		log.Println("Reading from port ... ")
 		buf := bytes.Buffer{}
 
 		for {
 			rbuf := make([]byte, 128)
 			n, err := port.Read(rbuf)
 			if err != nil {
-				// log.Println("Read: No data")
+				// No data received
 			} else {
-				// log.Println("Read: " + string(rbuf) + "")
 				buf.Write(rbuf[0:n])
 
 				// Check if command is complete

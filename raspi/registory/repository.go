@@ -1,6 +1,8 @@
 package registory
 
 import (
+	"fmt"
+
 	"raspi-extboard-raspi/domain"
 	"raspi-extboard-raspi/infrastructure"
 )
@@ -12,11 +14,11 @@ func EnvGetter() (domain.EnvGetter, error) {
 func EnvRecorder() (domain.EnvRecorder, error) {
 	datadog, err := infrastructure.NewDatadog()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to create datadog accessor: %s", err)
 	}
 	moshoapi, err := infrastructure.NewMoshoApi()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to create mosho API accessor: %s", err)
 	}
 	return &infrastructure.MultiEnvRecorder{
 		Recorders: []domain.EnvRecorder{datadog, moshoapi},
