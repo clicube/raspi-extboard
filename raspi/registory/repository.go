@@ -3,8 +3,8 @@ package registory
 import (
 	"fmt"
 
-	"raspi-extboard-raspi/domain"
-	"raspi-extboard-raspi/infrastructure"
+	"github.com/clicube/raspi-extboard/raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/infrastructure"
 )
 
 func EnvGetter() (domain.EnvGetter, error) {

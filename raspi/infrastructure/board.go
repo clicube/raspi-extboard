@@ -13,7 +13,7 @@ import (
 	"github.com/gofrs/flock"
 	"github.com/tarm/serial"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 const (

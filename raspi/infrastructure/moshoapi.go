@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type MoshoApi struct {

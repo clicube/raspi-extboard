@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"testing"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type MockDatadogClient struct{}

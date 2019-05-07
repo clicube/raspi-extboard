@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	"raspi-extboard-raspi/registory"
-	"raspi-extboard-raspi/usecase"
+	"github.com/clicube/raspi-extboard/raspi/registory"
+	"github.com/clicube/raspi-extboard/raspi/usecase"
 )
 
 func CmdlineExecute() error {

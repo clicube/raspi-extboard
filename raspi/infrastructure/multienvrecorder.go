@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type MultiEnvRecorder struct {

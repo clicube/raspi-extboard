@@ -5,7 +5,7 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type GaugeSender interface {

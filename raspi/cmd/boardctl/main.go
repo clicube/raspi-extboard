@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"raspi-extboard-raspi/presentation"
+	"github.com/clicube/raspi-extboard/raspi/presentation"
 )
 
 func main() {

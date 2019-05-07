@@ -3,7 +3,7 @@ package usecase
 import (
 	"log"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type SendIr struct {

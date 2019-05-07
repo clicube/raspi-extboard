@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"raspi-extboard-raspi/domain"
+	"github.com/clicube/raspi-extboard/raspi/domain"
 )
 
 type IrDataFile struct {

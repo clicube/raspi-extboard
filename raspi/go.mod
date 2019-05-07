@@ -1,4 +1,4 @@
-module raspi-extboard-raspi
+module github.com/clicube/raspi-extboard/raspi
 
 go 1.12
 
@@ -16,3 +16,5 @@ require (
 	golang.org/x/sys v0.0.0-20190502145724-3ef323f4f1fd // indirect
 	golang.org/x/tools v0.0.0-20190501045030-23463209683d // indirect
 )
+
+replace github.com/clicube/raspi-extboard/raspi => ./
